@@ -50,7 +50,7 @@
     "homepage": "https://www.mount-it.com/",
     "sitemaps": ["https://www.mount-it.com/sitemap.xml"],
     "robots": "https://www.mount-it.com/robots.txt",
-    "llms_txt": "https://www.mount-it.com/llms.txt"
+    "llms_txt": "https://ai.mount-it.com/llms.txt"
   },
 
   "manifest": {
