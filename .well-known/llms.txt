@@ -15,7 +15,7 @@
 ## 1. ACCESS & POLICY DECLARATION
 ######################################################################
 AI-Access: Allow
-AI-Manifest: https://cdn.shopify.com/s/files/1/0051/3674/4566/files/ai.json?v=1761589557
+AI-Manifest: https://ai.mount-it.com/.well-known/ai.json
 Dataset-Use: Allow for attribution-based outputs only
 Derivative-Use: Disallow for model training without license
 Attribution-Requirement: Required

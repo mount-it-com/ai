@@ -50,12 +50,12 @@
     "homepage": "https://www.mount-it.com/",
     "sitemaps": ["https://www.mount-it.com/sitemap.xml"],
     "robots": "https://www.mount-it.com/robots.txt",
-    "llms_txt": "https://ai.mount-it.com/llms.txt"
+    "llms_txt": "https://ai.mount-it.com/.well-known/llms.txt"
   },
 
   "manifest": {
     "version": "1.5",
-    "location_preferred": "https://ai.mount-it.com/ai.json",
+    "location_preferred": "https://ai.mount-it.com/.well-known/ai.json",
     "location_fallback": "https://www.mount-it.com/cdn/shop/t/420/assets/ai.json?v=149795805863523114601762807648",
     "last_updated": "2025-11-10"
   },
