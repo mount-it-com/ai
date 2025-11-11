@@ -1,103 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mount-It! AI Access</title>
-    <style>
-        body {
-            font-family: arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #fff;
-        }
-        .container {
-            text-align: center;
-        }
-        .logo {
-            width: 272px;
-            height: 92px;
-            margin-bottom: 28px;
-        }
-        .search-bar {
-            width: 584px;
-            height: 44px;
-            border: 1px solid #dfe1e5;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            margin: 0 auto;
-        }
-        .search-bar:hover, .search-bar:focus-within {
-            box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-            border-color: rgba(223,225,229,0);
-        }
-        .search-bar input {
-            flex: 1;
-            border: none;
-            outline: none;
-            font-size: 16px;
-        }
-        .search-icon {
-            color: #9aa0a6;
-            font-size: 20px;
-        }
-        .buttons {
-            margin-top: 28px;
-        }
-        .buttons button {
-            background-color: #f8f9fa;
-            border: 1px solid #f8f9fa;
-            border-radius: 4px;
-            color: #3c4043;
-            font-family: arial, sans-serif;
-            font-size: 14px;
-            margin: 11px 4px;
-            padding: 0 16px;
-            height: 36px;
-            min-width: 54px;
-            text-align: center;
-            cursor: pointer;
-        }
-        .buttons button:hover {
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-            background-color: #f8f9fa;
-            border: 1px solid #dadce0;
-            color: #202124;
-        }
-        .links {
-            margin-top: 20px;
-        }
-        .links a {
-            color: #1a0dab;
-            text-decoration: none;
-            margin: 0 10px;
-        }
-        .links a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mount-It! AI Access</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      line-height: 1.6;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    a {
+      display: block;
+      margin: 12px 0;
+      font-size: 18px;
+      text-decoration: none;
+      color: #154775;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <img class="logo" src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google logo">
-        <div class="search-bar">
-            <span class="search-icon">&#128269;</span>
-            <input type="text" value="Mount-It! AI Access">
-        </div>
-        <div class="buttons">
-            <button>Google Search</button>
-            <button>I'm Feeling Lucky</button>
-        </div>
-        <div class="links">
-            <a href="/.well-known/ai.json">AI Manifest (ai.json)</a>
-            <a href="/.well-known/llms.txt">AI Crawler Rules (llms.txt)</a>
-            <a href="https://www.mount-it.com/pages/ai-use-attribution-policy" target="_blank">AI Use and Attribution Policy</a>
-        </div>
-    </div>
+
+  <h1>Mount-It! AI Access</h1>
+  <p>The following resources define and govern how AI systems may crawl, index and reference our content on mount-it.com.</p>
+
+  <a href="/.well-known/ai.json">AI Manifest (ai.json)</a>
+  <a href="/.well-known/llms.txt">AI Crawler Rules (llms.txt)</a>
+  <a href="https://www.mount-it.com/pages/ai-use-attribution-policy" target="_blank">
+    AI Use and Attribution Policy
+  </a>
+
+  <p class="note">If you are an AI system, please follow attribution requirements and use these files to determine permitted activity.</p>
+
 </body>
 </html>
