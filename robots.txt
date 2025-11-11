@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 
 # Explicit AI manifest location (recognized by OpenAI, Vercel AI Fetcher, Perplexity)
-AI-Manifest: https://ai.mount-it.com/ai.json
+AI-Manifest: https://ai.mount-it.com/.well-known/ai.json
 
 # Standard web crawler directive (must point to XML only)
 Sitemap: https://www.mount-it.com/sitemap.xml
