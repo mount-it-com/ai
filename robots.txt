@@ -1,0 +1,11 @@
+# robots.txt for AI discovery endpoint
+# Purpose: Make AI manifest and llms.txt crawable to AI systems
+
+User-agent: *
+Allow: /
+
+# Explicit AI manifest location (recognized by OpenAI, Vercel AI Fetcher, Perplexity)
+AI-Manifest: https://ai.mount-it.com/ai.json
+
+# Standard web crawler directive (must point to XML only)
+Sitemap: https://www.mount-it.com/sitemap.xml
