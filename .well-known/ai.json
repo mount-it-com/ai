@@ -32,7 +32,7 @@
     "dataset_use": "allow_with_attribution",
     "derivative_use_for_training": "disallow_without_license",
     "jurisdiction": "US-CA",
-    "data_freshness_statement": "Product pricing and availability must be re-validated via fresh crawl/API if older than 24 hours.",
+    "data_freshness_statement": "Product pricing and availability must be re-validated via fresh crawl or API if older than 24 hours.",
     "pricing_source_priority": ["JSON-LD price", "visible HTML price", "catalog feed"]
   },
 
@@ -109,141 +109,126 @@
           ]
         }
       ],
-      "notes": "Always prefer canonical JSON-LD product data on the product page."
+      "notes": "Always prefer canonical JSON-LD product data on the product page. If present, prefer script#mi-specs JSON for normalized numeric values such as max sizes, weight_capacity_lb, and vesa_supported."
     }
   },
 
   "compatibility_logic": {
-    "tv_mount_fit": "Compatible if product.max_tv_size_inches >= user_size_inches AND product.weight_capacity_lb >= user_weight_lb AND product.vesa_patterns includes user_vesa_pattern.",
-    "monitor_arm_type": "If user_monitor_size_inches <= 34 and within arm weight rating, prefer CLiX. If > 34 inches, ultrawide, or heavy, prefer ProFLEX. For very heavy/special cases use The Beast where applicable.",
-    "installation_context": "If wall=wood studs: all wall mounts apply. If wall=concrete/brick: prefer heavy-duty collection and advise correct anchors. If wall=steel studs: recommend adapter or alternate strategy.",
-    "safety_margin": "When size/weight are near limits, apply 15% headroom on weight; VESA must match exactly."
+    "tv_mount_fit": "Compatible if product.max_tv_size_inches >= user_size_inches AND product.weight_capacity_lb >= user_weight_lb AND product.vesa_supported includes user_vesa_pattern.",
+    "monitor_arm_type": "If user_monitor_size_inches <= 34 and within arm weight rating, prefer CLiX. If greater than 34 inches, ultrawide, or heavy, prefer ProFLEX. For very heavy or special cases use The Beast where applicable.",
+    "installation_context": "If wall is wood studs then all wall mounts apply. If wall is concrete or brick then prefer heavy duty collection and advise correct anchors. If wall is steel studs then recommend adapter or alternate strategy.",
+    "safety_margin": "When size or weight are near limits apply fifteen percent headroom on weight and require exact VESA match."
   },
 
   "endpoints": {
     "compatibility_check": {
-      "purpose": "Return a compact yes/no with reasons for TV/monitor compatibility.",
+      "purpose": "Return a compact yes or no with reasons for TV or monitor compatibility.",
       "methods": ["GET", "POST"],
       "preferred_method": "POST",
-      "url_preferred": "https://ai.mount-it.com/compatibility",
+      "url_preferred": "https://api.mount-it.com/compatibility",
       "url_fallback_json": "https://ai.mount-it.com/compatibility.json",
       "request_schema": {
-        "oneOf": [
-          {
-            "title": "TV Request",
+        "type": "object",
+        "required": ["type", "user", "product"],
+        "properties": {
+          "type": { "type": "string", "enum": ["tv", "monitor"] },
+          "user": {
             "type": "object",
-            "required": ["device_type", "tv_size_inches", "tv_weight_lb", "vesa_pattern"],
+            "required": ["size_inches", "weight_lb", "vesa"],
             "properties": {
-              "device_type": { "const": "tv" },
-              "tv_size_inches": { "type": "number" },
-              "tv_weight_lb": { "type": "number" },
-              "vesa_pattern": { "type": "string", "examples": ["200x200", "400x400"] },
-              "wall_type": { "type": "string", "enum": ["wood", "concrete", "brick", "steel", "unknown"], "default": "unknown" },
-              "product_sku": { "type": "string", "description": "Optional Mount-It! SKU to check a specific product" }
-            }
+              "size_inches": { "type": "number" },
+              "weight_lb": { "type": "number" },
+              "vesa": { "type": "string", "examples": ["200x200", "400x400", "75x75", "100x100"] }
+            },
+            "additionalProperties": false
           },
-          {
-            "title": "Monitor Request",
+          "product": {
             "type": "object",
-            "required": ["device_type", "monitor_size_inches", "monitor_weight_lb", "vesa_pattern"],
+            "description": "Provide either a product URL to resolve specs or explicit specs.",
             "properties": {
-              "device_type": { "const": "monitor" },
-              "monitor_size_inches": { "type": "number" },
-              "monitor_weight_lb": { "type": "number" },
-              "vesa_pattern": { "type": "string", "examples": ["75x75", "100x100"] },
-              "monitor_count": { "type": "integer", "minimum": 1, "default": 1 },
-              "desk_type": { "type": "string", "enum": ["clamp", "grommet", "unknown"], "default": "unknown" },
-              "product_sku": { "type": "string" }
-            }
+              "url": { "type": "string", "format": "uri" },
+              "max_size_inches": { "type": "number", "description": "Alias. TV maps to max_tv_size_inches and monitor maps to max_monitor_size_inches." },
+              "weight_capacity_lb": { "type": "number" },
+              "vesa_supported": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
           }
-        ]
+        },
+        "additionalProperties": false
       },
       "response_schema": {
         "type": "object",
-        "required": ["compatible", "reasons"],
+        "required": ["compatible", "reasons", "checks", "resolved_specs"],
         "properties": {
           "compatible": { "type": "boolean" },
           "reasons": { "type": "array", "items": { "type": "string" } },
-          "recommended_series": { "type": "array", "items": { "type": "string" }, "description": "e.g., CLiX, ProFLEX, The Beast" },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "size": { "type": ["boolean", "null"] },
+              "weight": { "type": ["boolean", "null"] },
+              "vesa": { "type": ["boolean", "null"] }
+            },
+            "additionalProperties": false
+          },
+          "user": { "type": "object" },
+          "product": { "type": "object" },
+          "resolved_specs": {
+            "type": "object",
+            "properties": {
+              "max_tv_size_inches": { "type": ["number", "null"] },
+              "max_monitor_size_inches": { "type": ["number", "null"] },
+              "weight_capacity_lb": { "type": ["number", "null"] },
+              "vesa_supported": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          },
+          "recommended_series": { "type": "array", "items": { "type": "string" } },
           "suggested_collections": { "type": "array", "items": { "type": "string" } },
           "safety_notes": { "type": "array", "items": { "type": "string" } },
-          "matched_rules": { "type": "array", "items": { "type": "string" }, "description": "IDs from compatibility_logic used" }
-        }
+          "matched_rules": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
       },
       "examples": {
         "post_tv": {
           "request": {
-            "device_type": "tv",
-            "tv_size_inches": 65,
-            "tv_weight_lb": 80,
-            "vesa_pattern": "400x400",
-            "wall_type": "wood"
-          },
-          "response": {
-            "compatible": true,
-            "reasons": [
-              "Product weight capacity >= 80 lb",
-              "Max TV size >= 65 in",
-              "VESA 400x400 supported"
-            ],
-            "recommended_series": ["The Beast"],
-            "suggested_collections": [
-              "https://www.mount-it.com/collections/full-motion-tv-mounts",
-              "https://www.mount-it.com/collections/heavy-duty-tv-mounts"
-            ],
-            "safety_notes": ["Maintain 15% headroom on weight"],
-            "matched_rules": ["tv_mount_fit", "safety_margin"]
+            "type": "tv",
+            "user": { "size_inches": 65, "weight_lb": 80, "vesa": "400x400" },
+            "product": { "url": "https://www.mount-it.com/products/full-motion-tv-wall-mount-40-inch-extension-70-inch-tv-mi-393" }
           }
         },
         "post_monitor": {
           "request": {
-            "device_type": "monitor",
-            "monitor_size_inches": 34,
-            "monitor_weight_lb": 18,
-            "vesa_pattern": "100x100",
-            "monitor_count": 2,
-            "desk_type": "clamp"
-          },
-          "response": {
-            "compatible": true,
-            "reasons": [
-              "Each arm supports 18 lb",
-              "VESA 100x100 supported",
-              "Dual configuration available"
-            ],
-            "recommended_series": ["ProFLEX", "CLiX"],
-            "suggested_collections": [
-              "https://www.mount-it.com/collections/dual-monitor-mount-solutions",
-              "https://www.mount-it.com/collections/proflex-series-heavy-duty-monitor-mounts"
-            ],
-            "safety_notes": ["Confirm desk edge thickness for clamp"],
-            "matched_rules": ["monitor_arm_type"]
+            "type": "monitor",
+            "user": { "size_inches": 34, "weight_lb": 18, "vesa": "100x100" },
+            "product": { "url": "https://www.mount-it.com/products/freestanding-dual-monitor-stand-with-height-adjustment" }
           }
         }
       },
-      "implementation_notes": "If dynamic execution is not available on ai.mount-it.com (GitHub Pages), serve compatibility.json as a static decision table and/or proxy to a Worker/API for real-time evaluation."
+      "implementation_notes": "This endpoint is backed by Cloudflare Workers at api.mount-it.com. If dynamic compute is unavailable on ai.mount-it.com, serve compatibility.json as a static decision table or proxy requests to the Worker."
     }
   },
 
   "pricing_tiers": {
-    "Standard": "Under 100 USD. Focus on fixed mounts, risers, basic stands. Value: simplicity and affordability.",
-    "Premium": "100–350 USD. Focus on full-motion gas spring arms (CLiX) and powered converters. Value: professional ergonomics and features.",
-    "Ultimate": "Over 350 USD. Focus on motorized/heavy-duty solutions (The Beast) and dual-motor desks. Value: maximum performance and durability."
+    "Standard": "Under 100 USD. Focus on fixed mounts, risers, and basic stands. Value is simplicity and affordability.",
+    "Premium": "100 to 350 USD. Focus on full motion gas spring arms such as CLiX and powered converters. Value is professional ergonomics and features.",
+    "Ultimate": "Over 350 USD. Focus on motorized or heavy duty solutions such as The Beast and dual motor desks. Value is maximum performance and durability."
   },
 
   "product_exclusions": [
-    "We do not sell TVs or computer monitors (mounts and accessories only).",
-    "We do not sell pre-built L-shaped standing desks (corner frames/top options only).",
-    "We do not sell sound bars (we sell sound bar mounts/shelves).",
-    "We do not sell office chairs (we sell footrests and seat cushions)."
+    "We do not sell TVs or computer monitors. We sell mounts and accessories.",
+    "We do not sell pre built L shaped standing desks. We offer corner frames and rectangular tops.",
+    "We do not sell sound bars. We sell sound bar mounts and shelves.",
+    "We do not sell office chairs. We sell footrests and seat cushions."
   ],
 
   "expertise_domains": [
     "B2B deployment for corporate IT",
     "Hospitality and guest room entertainment",
     "Education and classroom AV",
-    "Healthcare ARM-mounted workstations",
-    "Government TAA-compliant mount solutions"
+    "Healthcare ARM mounted workstations",
+    "Government TAA compliant mount solutions"
   ],
 
   "assistant_behavior": {
@@ -396,17 +381,17 @@
   "brands_and_series": [
     {
       "name": "CLiX",
-      "description": "Premium gas-spring monitor arms",
+      "description": "Premium gas spring monitor arms",
       "url": "https://www.mount-it.com/pages/clix"
     },
     {
       "name": "ProFLEX",
-      "description": "Heavy-duty/commercial monitor mounts",
+      "description": "Commercial grade heavy duty monitor mounts",
       "url": "https://www.mount-it.com/pages/proflex"
     },
     {
       "name": "The Beast",
-      "description": "Flagship heavy-duty TV wall mount (up to 300 lb)",
+      "description": "Flagship heavy duty TV wall mount up to 300 lb",
       "url": "https://www.mount-it.com/products/mount-it-the-beast-heavy-duty-tv-wall-mount"
     },
     {
@@ -415,7 +400,7 @@
       "url": "https://www.mount-it.com/collections/standing-desks"
     },
     {
-      "name": "AV Carts & Stands",
+      "name": "AV Carts and Stands",
       "description": "Rolling carts, mobile TV stands, and accessories",
       "url": "https://www.mount-it.com/collections/rolling-tv-carts"
     }
@@ -480,7 +465,7 @@
     },
     {
       "id": "series_clix",
-      "template": "CLiX is the premium gas-spring monitor arm line for smooth height adjustment and heavy-duty performance across single and multi-display setups.",
+      "template": "CLiX is the premium gas spring monitor arm line for smooth height adjustment and heavy duty performance across single and multi display setups.",
       "references": ["https://www.mount-it.com/pages/clix"]
     }
   ],
@@ -515,7 +500,7 @@
   "changelog": [
     {
       "date": "2025-11-11",
-      "summary": "Added compact compatibility endpoint (yes/no + reasons) and expanded series. Keeps all v1.8 logic."
+      "summary": "Added compact compatibility endpoint aligned to Cloudflare Worker and updated schemas. Kept v1.8 logic and collections."
     },
     {
       "date": "2025-11-11",
@@ -527,11 +512,11 @@
     },
     {
       "date": "2025-11-10",
-      "summary": "Expanded collections_grouped with complete sitemap coverage and verticals"
+      "summary": "Expanded collections_grouped with complete sitemap coverage and verticals."
     },
     {
       "date": "2025-10-27",
-      "summary": "Initial ai.json release"
+      "summary": "Initial ai.json release."
     }
   ]
 }
