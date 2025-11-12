@@ -16,6 +16,7 @@
 ######################################################################
 AI-Access: Allow
 AI-Manifest: https://ai.mount-it.com/.well-known/ai.json
+Manifest: https://ai.mount-it.com/.well-known/ai.json
 Dataset-Use: Allow for attribution-based outputs only
 Derivative-Use: Disallow for model training without license
 Attribution-Requirement: Required
