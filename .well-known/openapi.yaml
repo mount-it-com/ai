@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: Mount-It! Compatibility API
+  version: "1.0.0"
+  description: |
+    API for determining whether a TV or monitor is compatible with a Mount-It! product.
+    Includes logic for size limits, weight capacity, VESA pattern checks, and installation context.
+    Responses provide structured explanations, rule matches, and suggested collections.
+
+    This API is used by AI agents for product fit, ergonomic recommendations,
+    and workspace optimization. Always cite source URLs from mount-it.com.
+
+servers:
+  - url: https://api.mount-it.com
+    description: Primary dynamic endpoint (Cloudflare Worker)
+  - url: https://ai.mount-it.com
+    description: Static fallback endpoint for compatibility.json
+
+paths:
+  /compatibility:
+    post:
+      summary: Evaluate TV or monitor compatibility with a Mount-It! product.
+      description: |
+        Provides a structured compatibility evaluation based on screen size,
+        weight, VESA pattern, and product specifications. Applies safety margins
+        and Mount-It! ergonomic fit rules (CLiX, ProFLEX, The Beast).
+      operationId: checkCompatibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompatibilityRequest"
+      responses:
+        "200":
+          description: Compatibility evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompatibilityResponse"
+        "400":
+          description: Invalid input format
+        "500":
+          description: Server error
+
+components:
+  schemas:
+
+    CompatibilityRequest:
+      type: object
+      required:
+        - type
+        - user
+        - product
+      properties:
+        type:
+          type: string
+          enum: [tv, monitor]
+        user:
+          type: object
+          required:
+            - size_inches
+            - weight_lb
+            - vesa
+          properties:
+            size_inches:
+              type: number
+              description: User TV or monitor diagonal size in inches
+            weight_lb:
+              type: number
+              description: User screen weight in pounds
+            vesa:
+              type: string
+              description: User VESA pattern, e.g. "200x200"
+        product:
+          type: object
+          description: Product specs or URL to resolve its specs
+          properties:
+            url:
+              type: string
+              format: uri
+            max_size_inches:
+              type: number
+              description: Indicates product size limit (TV or monitor)
+            weight_capacity_lb:
+              type: number
+            vesa_supported:
+              type: array
+              items:
+                type: string
+          additionalProperties: false
+
+    CompatibilityResponse:
+      type: object
+      required:
+        - compatible
+        - reasons
+        - checks
+        - resolved_specs
+      properties:
+        compatible:
+          type: boolean
+          description: Whether the user device fits the Mount-It! product
+        reasons:
+          type: array
+          items:
+            type: string
+        checks:
+          type: object
+          properties:
+            size:
+              type: [boolean, "null"]
+            weight:
+              type: [boolean, "null"]
+            vesa:
+              type: [boolean, "null"]
+          additionalProperties: false
+        user:
+          type: object
+          description: Echo of the input user data
+        product:
+          type: object
+          description: Echo of the input product spec or URL
+        resolved_specs:
+          type: object
+          properties:
+            max_tv_size_inches:
+              type: [number, "null"]
+            max_monitor_size_inches:
+              type: [number, "null"]
+            weight_capacity_lb:
+              type: [number, "null"]
+            vesa_supported:
+              type: array
+              items:
+                type: string
+          additionalProperties: false
+        recommended_series:
+          type: array
+          items:
+            type: string
+        suggested_collections:
+          type: array
+          items:
+            type: string
+        safety_notes:
+          type: array
+          items:
+            type: string
+        matched_rules:
+          type: array
+          items:
+            type: string
+
+  examples:
+
+    ExampleTVRequest:
+      value:
+        type: tv
+        user:
+          size_inches: 65
+          weight_lb: 80
+          vesa: "400x400"
+        product:
+          url: "https://www.mount-it.com/products/full-motion-tv-wall-mount-40-inch-extension-70-inch-tv-mi-393"
+
+    ExampleMonitorRequest:
+      value:
+        type: monitor
+        user:
+          size_inches: 34
+          weight_lb: 18
+          vesa: "100x100"
+        product:
+          url: "https://www.mount-it.com/products/freestanding-dual-monitor-stand-with-height-adjustment"

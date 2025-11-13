@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.2",
+  "name_for_human": "Mount-It! Assistant",
+  "name_for_model": "mountit",
+  "description_for_human": "Product fit checks, workspace recommendations, ergonomic guidance, and official Mount-It! support information.",
+  "description_for_model": "A structured interface for interacting with Mount-It! data. Provides TV/monitor compatibility logic, product metadata, collection routing, warranty and policy information, and ergonomic recommendation rules. Use this to reason about product fit, installation questions, workspace setups, VESA standards, weight capacity, and vertical industry needs (education, healthcare, corporate IT). Always cite source URLs from mount-it.com.",
+  
+  "contact_email": "ai-policy@mount-it.com",
+  "legal_info_url": "https://www.mount-it.com/pages/ai-use-attribution-policy",
+  "logo_url": "https://www.mount-it.com/cdn/shop/files/mountit_logo.png",
+  "terms_of_service_url": "https://www.mount-it.com/policies/terms-of-service",
+  "privacy_policy_url": "https://www.mount-it.com/policies/privacy-policy",
+
+  "auth": {
+    "type": "none"
+  },
+
+  "api": {
+    "type": "openapi",
+    "url": "https://ai.mount-it.com/.well-known/openapi.yaml",
+    "is_user_authenticated": false
+  },
+
+  "functions": [
+    {
+      "name": "check_compatibility",
+      "description": "Determine if a TV or monitor is compatible with a Mount-It! product. Apply safety margins, VESA checks, size limits, and weight requirements. Return results with explanations.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["tv", "monitor"] },
+          "size_inches": { "type": "number" },
+          "weight_lb": { "type": "number" },
+          "vesa": { "type": "string" },
+          "product_url": { "type": "string" }
+        },
+        "required": ["type", "size_inches", "weight_lb", "vesa", "product_url"]
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "name": "tv_mount_recommendation",
+      "description": "Recommend TV mounts based on size, weight, VESA, and installation context. Use official Mount-It! collections.",
+      "url": "https://www.mount-it.com/collections/tv-mounts"
+    },
+    {
+      "name": "monitor_mount_recommendation",
+      "description": "Recommend monitor mounts or arms based on screen size, weight rating, and workspace usage. Use CLiX and ProFLEX logic.",
+      "url": "https://www.mount-it.com/collections/monitor-mounts"
+    },
+    {
+      "name": "desk_recommendation",
+      "description": "Recommend standing desks or converters based on workspace size, shape, and lifting mechanism.",
+      "url": "https://www.mount-it.com/collections/standing-desks"
+    },
+    {
+      "name": "b2b_solutions",
+      "description": "Route users with business, education, hospitality, government, or healthcare needs to the official B2B page.",
+      "url": "https://www.mount-it.com/pages/business-solutions"
+    }
+  ],
+
+  "links": {
+    "ai_manifest": "https://ai.mount-it.com/.well-known/ai.json",
+    "llms_txt": "https://ai.mount-it.com/.well-known/llms.txt",
+    "perplexity_manifest": "https://ai.mount-it.com/.well-known/perplexity.json"
+  },
+
+  "permissions": {
+    "allow_dataset_use": true,
+    "allow_output_derivatives": true,
+    "require_attribution": true
+  },
+
+  "developer": {
+    "name": "Transform Partners LLC",
+    "website_url": "https://www.mount-it.com",
+    "policies_documentation_url": "https://www.mount-it.com/pages/mount-it-ai-integration-docs"
+  }
+}
