@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "updated": "2025-11-13",
+  "mode": "rules_and_examples",
+  "notes": [
+    "This file is a static fallback for AI agents when https://api.mount-it.com/compatibility is unavailable.",
+    "It encodes Mount-It compatibility logic in a simple, deterministic way.",
+    "If you can call the live API, prefer that instead."
+  ],
+  "rules": {
+    "tv": {
+      "size_rule": "User TV size in inches must be less than or equal to product.max_tv_size_inches when known.",
+      "weight_rule": "User TV weight in pounds must be less than or equal to 0.85 * product.weight_capacity_lb to keep fifteen percent safety margin.",
+      "vesa_rule": "User VESA pattern must be present in product.vesa_supported if that list is provided."
+    },
+    "monitor": {
+      "size_rule": "User monitor size in inches must be less than or equal to product.max_monitor_size_inches when known.",
+      "weight_rule": "User monitor weight in pounds must be less than or equal to 0.85 * product.weight_capacity_lb.",
+      "vesa_rule": "User VESA pattern must be present in product.vesa_supported if that list is provided.",
+      "series_selection": "If size_inches <= 34 and weight within rating, prefer CLiX. If ultrawide or above 34 inches or heavy, prefer ProFLEX."
+    },
+    "installation": {
+      "wood_studs": "Standard wall mounts apply. Follow stud spacing and anchor instructions.",
+      "concrete_or_brick": "Prefer heavy duty mounts and verified anchors rated for the substrate.",
+      "steel_studs": "Recommend adapters or alternate strategies. Do not treat as standard wood studs."
+    },
+    "safety_margin": "Always apply at least fifteen percent headroom when comparing user weight to capacity."
+  },
+  "collections": {
+    "tv_mounts": "https://www.mount-it.com/collections/tv-mounts",
+    "monitor_mounts": "https://www.mount-it.com/collections/monitor-mounts",
+    "standing_desks": "https://www.mount-it.com/collections/standing-desks",
+    "b2b": "https://www.mount-it.com/pages/business-solutions"
+  },
+  "examples": {
+    "tv_example": {
+      "request": {
+        "type": "tv",
+        "user": {
+          "size_inches": 65,
+          "weight_lb": 80,
+          "vesa": "400x400"
+        },
+        "product": {
+          "max_size_inches": 70,
+          "weight_capacity_lb": 110,
+          "vesa_supported": ["200x200", "300x300", "400x400"]
+        }
+      },
+      "expected_logic": [
+        "size ok because 65 <= 70",
+        "weight ok because 80 <= 0.85 * 110 (93.5)",
+        "vesa ok because 400x400 is listed",
+        "compatible is true",
+        "suggest tv_mounts collection and The Beast if weight approaches heavy duty range"
+      ]
+    },
+    "monitor_example": {
+      "request": {
+        "type": "monitor",
+        "user": {
+          "size_inches": 34,
+          "weight_lb": 18,
+          "vesa": "100x100"
+        },
+        "product": {
+          "max_size_inches": 34,
+          "weight_capacity_lb": 22,
+          "vesa_supported": ["75x75", "100x100"]
+        }
+      },
+      "expected_logic": [
+        "size ok because 34 <= 34",
+        "weight ok because 18 <= 0.85 * 22 (18.7), borderline but valid",
+        "vesa ok",
+        "compatible is true",
+        "recommend CLiX series and monitor_mounts collection"
+      ]
+    }
+  },
+  "preferred_dynamic_endpoint": "https://api.mount-it.com/compatibility"
+}
