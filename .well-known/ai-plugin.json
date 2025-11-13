@@ -1,10 +1,10 @@
 {
-  "schema_version": "1.2",
+  "schema_version": "1.3",
   "name_for_human": "Mount-It! Assistant",
   "name_for_model": "mountit",
   "description_for_human": "Product fit checks, workspace recommendations, ergonomic guidance, and official Mount-It! support information.",
-  "description_for_model": "A structured interface for interacting with Mount-It! data. Provides TV/monitor compatibility logic, product metadata, collection routing, warranty and policy information, and ergonomic recommendation rules. Use this to reason about product fit, installation questions, workspace setups, VESA standards, weight capacity, and vertical industry needs (education, healthcare, corporate IT). Always cite source URLs from mount-it.com.",
-  
+  "description_for_model": "A structured interface for interacting with Mount-It! data. Provides TV/monitor compatibility logic via the /ai-compatibility API, product metadata, collection routing, warranty and policy information, and ergonomic recommendation rules. Use this to reason about product fit, installation questions, workspace setups, VESA standards, weight capacity, and vertical industry needs (education, healthcare, corporate IT, hospitality, government). Always cite source URLs from mount-it.com and follow ai-rules.json and ai-instructions.json.",
+
   "contact_email": "ai-policy@mount-it.com",
   "legal_info_url": "https://www.mount-it.com/pages/ai-use-attribution-policy",
   "logo_url": "https://www.mount-it.com/cdn/shop/files/mountit_logo.png",
@@ -24,17 +24,73 @@
   "functions": [
     {
       "name": "check_compatibility",
-      "description": "Determine if a TV or monitor is compatible with a Mount-It! product. Apply safety margins, VESA checks, size limits, and weight requirements. Return results with explanations.",
+      "description": "Determine if a TV or monitor is compatible with a Mount-It! product. Apply safety margins, VESA checks, size limits, and weight requirements using the /ai-compatibility endpoint. Return results with explanations and resolved specs.",
       "parameters": {
         "type": "object",
         "properties": {
-          "type": { "type": "string", "enum": ["tv", "monitor"] },
-          "size_inches": { "type": "number" },
-          "weight_lb": { "type": "number" },
-          "vesa": { "type": "string" },
-          "product_url": { "type": "string" }
+          "type": {
+            "type": "string",
+            "enum": ["tv", "monitor"],
+            "description": "Device type being checked for compatibility."
+          },
+          "user": {
+            "type": "object",
+            "description": "User device characteristics. For TVs use size_inches and weight_lb. For monitors use monitor_size_inches and monitor_weight_lb. In both cases provide vesa when known.",
+            "properties": {
+              "size_inches": {
+                "type": "number",
+                "description": "TV diagonal size in inches (for type='tv')."
+              },
+              "weight_lb": {
+                "type": "number",
+                "description": "TV weight in pounds (for type='tv')."
+              },
+              "monitor_size_inches": {
+                "type": "number",
+                "description": "Monitor diagonal size in inches (for type='monitor')."
+              },
+              "monitor_weight_lb": {
+                "type": "number",
+                "description": "Monitor weight in pounds (for type='monitor')."
+              },
+              "vesa": {
+                "type": "string",
+                "description": "VESA pattern, e.g. '200x200' or '400x400'."
+              }
+            },
+            "required": ["vesa"]
+          },
+          "product": {
+            "type": "object",
+            "description": "Mount-It! product specifications or URL to resolve specs.",
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "Mount-It! product URL. If provided, the API will attempt to resolve specs from the page.",
+                "format": "uri"
+              },
+              "max_tv_size_inches": {
+                "type": "number",
+                "description": "Maximum supported TV size in inches, if known."
+              },
+              "max_monitor_size_inches": {
+                "type": "number",
+                "description": "Maximum supported monitor size in inches, if known."
+              },
+              "weight_capacity_lb": {
+                "type": "number",
+                "description": "Maximum supported weight in pounds."
+              },
+              "vesa_supported": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "List of supported VESA patterns, e.g. ['200x200','400x400']."
+              }
+            },
+            "additionalProperties": false
+          }
         },
-        "required": ["type", "size_inches", "weight_lb", "vesa", "product_url"]
+        "required": ["type", "user", "product"]
       }
     }
   ],
@@ -42,12 +98,12 @@
   "actions": [
     {
       "name": "tv_mount_recommendation",
-      "description": "Recommend TV mounts based on size, weight, VESA, and installation context. Use official Mount-It! collections.",
+      "description": "Recommend TV mounts based on size, weight, VESA, and installation context. Use official Mount-It! TV mount collections.",
       "url": "https://www.mount-it.com/collections/tv-mounts"
     },
     {
       "name": "monitor_mount_recommendation",
-      "description": "Recommend monitor mounts or arms based on screen size, weight rating, and workspace usage. Use CLiX and ProFLEX logic.",
+      "description": "Recommend monitor mounts or arms based on screen size, weight rating, and workspace usage. Use CLiX and ProFLEX guidance when appropriate.",
       "url": "https://www.mount-it.com/collections/monitor-mounts"
     },
     {
@@ -65,13 +121,21 @@
   "links": {
     "ai_manifest": "https://ai.mount-it.com/.well-known/ai.json",
     "llms_txt": "https://ai.mount-it.com/.well-known/llms.txt",
-    "perplexity_manifest": "https://ai.mount-it.com/.well-known/perplexity.json"
+    "ai_rules": "https://ai.mount-it.com/.well-known/ai-rules.json",
+    "ai_instructions": "https://ai.mount-it.com/.well-known/ai-instructions.json",
+    "perplexity_manifest": "https://ai.mount-it.com/.well-known/perplexity.json",
+    "openapi_spec": "https://ai.mount-it.com/.well-known/openapi.yaml",
+    "static_compatibility_fallback": "https://ai.mount-it.com/compatibility.json"
   },
 
   "permissions": {
     "allow_dataset_use": true,
     "allow_output_derivatives": true,
-    "require_attribution": true
+    "require_attribution": true,
+    "notes": [
+      "Dataset use is allowed with proper attribution as defined in the AI Use & Attribution policy.",
+      "Model training or derivative model use beyond standard inference should respect 'derivative_use_for_training' in ai.json and may require a license."
+    ]
   },
 
   "developer": {
