@@ -125,7 +125,7 @@
       "purpose": "Return a compact yes or no with reasons for TV or monitor compatibility.",
       "methods": ["GET", "POST"],
       "preferred_method": "POST",
-      "url_preferred": "https://api.mount-it.com/compatibility",
+      "url_preferred": "https://api.mount-it.com/ai-compatibility",
       "url_fallback_json": "https://ai.mount-it.com/compatibility.json",
       "request_schema": {
         "type": "object",

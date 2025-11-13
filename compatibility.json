@@ -78,5 +78,5 @@
       ]
     }
   },
-  "preferred_dynamic_endpoint": "https://api.mount-it.com/compatibility"
+  "preferred_dynamic_endpoint": "https://api.mount-it.com/ai-compatibility"
 }

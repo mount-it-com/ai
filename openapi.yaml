@@ -12,12 +12,12 @@ info:
 
 servers:
   - url: https://api.mount-it.com
-    description: Primary dynamic endpoint (Cloudflare Worker)
+    description: Public AI compatibility endpoint (Cloudflare Worker)
   - url: https://ai.mount-it.com
     description: Static fallback endpoint for compatibility.json
 
 paths:
-  /compatibility:
+  /ai-compatibility:
     post:
       summary: Evaluate TV or monitor compatibility with a Mount-It! product.
       description: |
@@ -58,20 +58,30 @@ components:
           enum: [tv, monitor]
         user:
           type: object
-          required:
-            - size_inches
-            - weight_lb
-            - vesa
+          description: |
+            For TV:
+              - size_inches
+              - weight_lb
+            For monitor:
+              - monitor_size_inches
+              - monitor_weight_lb
+            In both cases, vesa is the VESA pattern string.
           properties:
             size_inches:
               type: number
-              description: User TV or monitor diagonal size in inches
+              description: TV diagonal size in inches (for type="tv")
             weight_lb:
               type: number
-              description: User screen weight in pounds
+              description: TV weight in pounds (for type="tv")
+            monitor_size_inches:
+              type: number
+              description: Monitor diagonal size in inches (for type="monitor")
+            monitor_weight_lb:
+              type: number
+              description: Monitor weight in pounds (for type="monitor")
             vesa:
               type: string
-              description: User VESA pattern, e.g. "200x200"
+              description: VESA pattern, e.g. "200x200"
         product:
           type: object
           description: Product specs or URL to resolve its specs
@@ -79,9 +89,12 @@ components:
             url:
               type: string
               format: uri
-            max_size_inches:
+            max_tv_size_inches:
               type: number
-              description: Indicates product size limit (TV or monitor)
+              description: Max TV size supported in inches (if applicable)
+            max_monitor_size_inches:
+              type: number
+              description: Max monitor size supported in inches (if applicable)
             weight_capacity_lb:
               type: number
             vesa_supported:
@@ -151,25 +164,3 @@ components:
           type: array
           items:
             type: string
-
-  examples:
-
-    ExampleTVRequest:
-      value:
-        type: tv
-        user:
-          size_inches: 65
-          weight_lb: 80
-          vesa: "400x400"
-        product:
-          url: "https://www.mount-it.com/products/full-motion-tv-wall-mount-40-inch-extension-70-inch-tv-mi-393"
-
-    ExampleMonitorRequest:
-      value:
-        type: monitor
-        user:
-          size_inches: 34
-          weight_lb: 18
-          vesa: "100x100"
-        product:
-          url: "https://www.mount-it.com/products/freestanding-dual-monitor-stand-with-height-adjustment"
