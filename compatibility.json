@@ -1,39 +1,180 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "updated": "2025-11-13",
-  "mode": "rules_and_examples",
+  "mode": "contract_rules_and_examples",
   "notes": [
-    "This file is a static fallback for AI agents when https://api.mount-it.com/compatibility is unavailable.",
-    "It encodes Mount-It compatibility logic in a simple, deterministic way.",
-    "If you can call the live API, prefer that instead."
+    "This file is a static fallback and contract description for AI agents when https://api.mount-it.com/ai-compatibility is unavailable or cannot be called.",
+    "If you can call the live API, prefer that instead.",
+    "For full, canonical decision rules, consult ai-rules.json."
   ],
-  "rules": {
+
+  "links": {
+    "dynamic_endpoint": "https://api.mount-it.com/ai-compatibility",
+    "ai_rules": "https://ai.mount-it.com/.well-known/ai-rules.json",
+    "ai_manifest": "https://ai.mount-it.com/.well-known/ai.json"
+  },
+
+  "logic_summary": {
     "tv": {
       "size_rule": "User TV size in inches must be less than or equal to product.max_tv_size_inches when known.",
-      "weight_rule": "User TV weight in pounds must be less than or equal to 0.85 * product.weight_capacity_lb to keep fifteen percent safety margin.",
+      "weight_rule": "User TV weight in pounds should be less than or equal to 0.85 * product.weight_capacity_lb to keep approximately fifteen percent safety margin.",
       "vesa_rule": "User VESA pattern must be present in product.vesa_supported if that list is provided."
     },
     "monitor": {
-      "size_rule": "User monitor size in inches must be less than or equal to product.max_monitor_size_inches when known.",
-      "weight_rule": "User monitor weight in pounds must be less than or equal to 0.85 * product.weight_capacity_lb.",
+      "size_rule": "User monitor size in inches must be less than or equal to product.max_monitor_size_inches when known (or max_tv_size_inches as a fallback).",
+      "weight_rule": "User monitor weight in pounds should be less than or equal to 0.85 * product.weight_capacity_lb.",
       "vesa_rule": "User VESA pattern must be present in product.vesa_supported if that list is provided.",
-      "series_selection": "If size_inches <= 34 and weight within rating, prefer CLiX. If ultrawide or above 34 inches or heavy, prefer ProFLEX."
+      "series_selection_hint": "If monitor_size_inches <= 34 and weight within rating, CLiX is often suitable. If ultrawide, above 34 inches, or heavy, prefer heavier duty options such as ProFLEX."
     },
     "installation": {
-      "wood_studs": "Standard wall mounts apply. Follow stud spacing and anchor instructions.",
-      "concrete_or_brick": "Prefer heavy duty mounts and verified anchors rated for the substrate.",
-      "steel_studs": "Recommend adapters or alternate strategies. Do not treat as standard wood studs."
+      "wood_studs": "Standard wall mounts apply. Follow stud spacing and anchor instructions from the installation manual.",
+      "concrete_or_brick": "Prefer heavy duty mounts and anchors rated for masonry substrates.",
+      "steel_studs": "Recommend adapters or alternate strategies. Do not treat steel studs as standard wood studs."
     },
-    "safety_margin": "Always apply at least fifteen percent headroom when comparing user weight to capacity."
+    "safety_margin": "When reasoning about safety, apply at least ~15% headroom between user device weight and the mount capacity. If near the limit, advise caution or a heavier duty mount."
   },
+
   "collections": {
     "tv_mounts": "https://www.mount-it.com/collections/tv-mounts",
     "monitor_mounts": "https://www.mount-it.com/collections/monitor-mounts",
     "standing_desks": "https://www.mount-it.com/collections/standing-desks",
     "b2b": "https://www.mount-it.com/pages/business-solutions"
   },
+
+  "request_shape": {
+    "type": "object",
+    "required": ["type", "user", "product"],
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": ["tv", "monitor"]
+      },
+      "user": {
+        "type": "object",
+        "description": "For TVs use size_inches and weight_lb. For monitors use monitor_size_inches and monitor_weight_lb. In both cases vesa is the VESA pattern string.",
+        "properties": {
+          "size_inches": {
+            "type": "number",
+            "description": "TV diagonal size in inches for type='tv'."
+          },
+          "weight_lb": {
+            "type": "number",
+            "description": "TV weight in pounds for type='tv'."
+          },
+          "monitor_size_inches": {
+            "type": "number",
+            "description": "Monitor diagonal size in inches for type='monitor'."
+          },
+          "monitor_weight_lb": {
+            "type": "number",
+            "description": "Monitor weight in pounds for type='monitor'."
+          },
+          "vesa": {
+            "type": "string",
+            "description": "VESA pattern such as '200x200' or '400x400'."
+          }
+        },
+        "required": ["vesa"],
+        "additionalProperties": false
+      },
+      "product": {
+        "type": "object",
+        "description": "Mount-It! product specifications or URL to resolve its specs.",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Mount-It! product URL. If provided the Worker may attempt to resolve specs from the page."
+          },
+          "max_tv_size_inches": {
+            "type": "number"
+          },
+          "max_monitor_size_inches": {
+            "type": "number"
+          },
+          "weight_capacity_lb": {
+            "type": "number"
+          },
+          "vesa_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  },
+
+  "response_shape": {
+    "type": "object",
+    "required": ["compatible", "reasons", "checks", "user", "product", "resolved_specs"],
+    "properties": {
+      "compatible": {
+        "type": "boolean",
+        "description": "Final decision from the Worker. True if all evaluated checks pass, false otherwise."
+      },
+      "reasons": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Human readable explanation of each evaluated check."
+      },
+      "checks": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": ["boolean", "null"]
+          },
+          "weight": {
+            "type": ["boolean", "null"]
+          },
+          "vesa": {
+            "type": ["boolean", "null"]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Per dimension pass or fail status. Null means the Worker could not evaluate that dimension from provided data."
+      },
+      "user": {
+        "type": "object",
+        "description": "Echo of the input user block."
+      },
+      "product": {
+        "type": "object",
+        "description": "Echo of the input product block."
+      },
+      "resolved_specs": {
+        "type": "object",
+        "properties": {
+          "max_tv_size_inches": {
+            "type": ["number", "null"]
+          },
+          "max_monitor_size_inches": {
+            "type": ["number", "null"]
+          },
+          "weight_capacity_lb": {
+            "type": ["number", "null"]
+          },
+          "vesa_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "Worker normalized product specs used to make the decision."
+      }
+    },
+    "additionalProperties": false
+  },
+
   "examples": {
-    "tv_example": {
+    "tv_compatible": {
       "request": {
         "type": "tv",
         "user": {
@@ -42,41 +183,84 @@
           "vesa": "400x400"
         },
         "product": {
-          "max_size_inches": 70,
+          "max_tv_size_inches": 70,
           "weight_capacity_lb": 110,
           "vesa_supported": ["200x200", "300x300", "400x400"]
         }
       },
-      "expected_logic": [
-        "size ok because 65 <= 70",
-        "weight ok because 80 <= 0.85 * 110 (93.5)",
-        "vesa ok because 400x400 is listed",
-        "compatible is true",
-        "suggest tv_mounts collection and The Beast if weight approaches heavy duty range"
-      ]
+      "response": {
+        "compatible": true,
+        "reasons": [
+          "Size OK (65\" <= 70)",
+          "Weight OK (80 lb <= 110 lb)",
+          "VESA OK (400x400 supported)"
+        ],
+        "checks": {
+          "size": true,
+          "weight": true,
+          "vesa": true
+        },
+        "user": {
+          "size_inches": 65,
+          "weight_lb": 80,
+          "vesa": "400x400"
+        },
+        "product": {
+          "max_tv_size_inches": 70,
+          "weight_capacity_lb": 110,
+          "vesa_supported": ["200x200", "300x300", "400x400"]
+        },
+        "resolved_specs": {
+          "max_tv_size_inches": 70,
+          "max_monitor_size_inches": null,
+          "weight_capacity_lb": 110,
+          "vesa_supported": ["200x200", "300x300", "400x400"]
+        }
+      }
     },
-    "monitor_example": {
+    "monitor_not_compatible": {
       "request": {
         "type": "monitor",
         "user": {
-          "size_inches": 34,
-          "weight_lb": 18,
+          "monitor_size_inches": 49,
+          "monitor_weight_lb": 40,
           "vesa": "100x100"
         },
         "product": {
-          "max_size_inches": 34,
+          "max_monitor_size_inches": 34,
           "weight_capacity_lb": 22,
           "vesa_supported": ["75x75", "100x100"]
         }
       },
-      "expected_logic": [
-        "size ok because 34 <= 34",
-        "weight ok because 18 <= 0.85 * 22 (18.7), borderline but valid",
-        "vesa ok",
-        "compatible is true",
-        "recommend CLiX series and monitor_mounts collection"
-      ]
+      "response": {
+        "compatible": false,
+        "reasons": [
+          "Size FAIL (49\" > 34)",
+          "Weight FAIL (40 lb > 22 lb)",
+          "VESA OK (100x100 supported)"
+        ],
+        "checks": {
+          "size": false,
+          "weight": false,
+          "vesa": true
+        },
+        "user": {
+          "monitor_size_inches": 49,
+          "monitor_weight_lb": 40,
+          "vesa": "100x100"
+        },
+        "product": {
+          "max_monitor_size_inches": 34,
+          "weight_capacity_lb": 22,
+          "vesa_supported": ["75x75", "100x100"]
+        },
+        "resolved_specs": {
+          "max_tv_size_inches": null,
+          "max_monitor_size_inches": 34,
+          "weight_capacity_lb": 22,
+          "vesa_supported": ["75x75", "100x100"]
+        }
+      }
     }
-  },
-  "preferred_dynamic_endpoint": "https://api.mount-it.com/ai-compatibility"
+  }
 }
