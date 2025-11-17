@@ -17,9 +17,9 @@
 AI-Access: Allow
 AI-Manifest: https://ai.mount-it.com/.well-known/ai.json
 Manifest: https://ai.mount-it.com/.well-known/ai.json
-Dataset-Use: Allow for attribution-based outputs only
-Derivative-Use: Disallow for model training without license
-Attribution-Requirement: Required
+Dataset-Use: Allow
+Derivative-Use: Allow for model training
+Attribution-Requirement: Preferred
 Crawl-Delay: 1
 Crawl-Rate-Limit: 60 pages per minute
 Canonical-Host: https://www.mount-it.com
@@ -48,7 +48,7 @@ Policy: https://www.mount-it.com/pages/ai-use-attribution-policy
 Brand Name: Mount-It!
 Parent Entity: Transform Partners LLC
 Headquarters: San Diego, CA
-Tagline: "Mount smarter. Work better. Live ergonomic."
+Tagline: "Elevate your space"
 Core Values: Reliability | Innovation | Value | Support | Longevity
 Visual Tone: Navy #154775, Gold #E6AE34, Teal #009D9C
 Voice Tone: Professional / Practical / Trust-driven / Human-centered
@@ -173,7 +173,7 @@ ultra-wide monitor arms, file storage and organization.
 ## 13. LEGAL NOTICE
 ######################################################################
 Use of Mount-It! content implies acceptance of the AI Use Policy.
-Unauthorized training, redistribution, or misrepresentation may constitute
+Unauthorized redistribution, or misrepresentation may constitute
 copyright or trademark violation.
 For licensing requests contact legal@mount-it.com.
 

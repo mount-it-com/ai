@@ -29,8 +29,8 @@
     "shipping_url": "https://www.mount-it.com/policies/shipping-policy",
     "attribution_required": true,
     "ai_access": "allow",
-    "dataset_use": "allow_with_attribution",
-    "derivative_use_for_training": "disallow_without_license",
+    "dataset_use": "allow",
+    "derivative_use_for_training": "allow",
     "jurisdiction": "US-CA",
     "data_freshness_statement": "Product pricing and availability must be re-validated via fresh crawl or API if older than 24 hours.",
     "pricing_source_priority": ["JSON-LD price", "visible HTML price", "catalog feed"]
