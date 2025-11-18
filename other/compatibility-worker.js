@@ -2,8 +2,8 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Only respond to /compatibility
-    if (url.pathname !== "/compatibility") {
+    // Accept both canonical and legacy paths
+    if (url.pathname !== "/ai-compatibility" && url.pathname !== "/compatibility") {
       return new Response(
         JSON.stringify({ error: "Not found" }),
         { status: 404, headers: defaultHeaders() }
@@ -27,7 +27,10 @@ export default {
       );
     }
 
-    const validationError = validateRequest(body);
+    // Normalize to canonical schema before validation and logic
+    const normalized = normalizeRequest(body);
+
+    const validationError = validateRequest(normalized);
     if (validationError) {
       return new Response(
         JSON.stringify({ error: validationError }),
@@ -35,7 +38,7 @@ export default {
       );
     }
 
-    const result = evaluateCompatibility(body);
+    const result = evaluateCompatibility(normalized);
 
     return new Response(
       JSON.stringify(result),
@@ -49,6 +52,96 @@ function defaultHeaders() {
     "content-type": "application/json; charset=utf-8",
     "access-control-allow-origin": "*",
     "cache-control": "no-store"
+  };
+}
+
+/**
+ * Normalize incoming request to a canonical shape
+ * so older monitor_* and tv_* fields still work.
+ */
+function normalizeRequest(body) {
+  if (!body || typeof body !== "object") {
+    return {};
+  }
+
+  const rawType = body.type;
+  const rawUser = body.user || {};
+  const rawProduct = body.product || {};
+
+  // Canonical type
+  const type = rawType === "tv" || rawType === "monitor" ? rawType : "tv";
+
+  // Canonical user fields
+  const size_inches =
+    typeof rawUser.size_inches === "number"
+      ? rawUser.size_inches
+      : typeof rawUser.monitor_size_inches === "number"
+      ? rawUser.monitor_size_inches
+      : typeof rawUser.tv_size_inches === "number"
+      ? rawUser.tv_size_inches
+      : undefined;
+
+  const weight_lb =
+    typeof rawUser.weight_lb === "number"
+      ? rawUser.weight_lb
+      : typeof rawUser.monitor_weight_lb === "number"
+      ? rawUser.monitor_weight_lb
+      : typeof rawUser.tv_weight_lb === "number"
+      ? rawUser.tv_weight_lb
+      : undefined;
+
+  const vesa =
+    typeof rawUser.vesa === "string"
+      ? rawUser.vesa
+      : typeof rawUser.vesa_pattern === "string"
+      ? rawUser.vesa_pattern
+      : typeof rawUser.vesaPattern === "string"
+      ? rawUser.vesaPattern
+      : undefined;
+
+  const user = {
+    ...rawUser,
+    size_inches,
+    weight_lb,
+    vesa
+  };
+
+  // Canonical product fields
+  const max_size_inches =
+    typeof rawProduct.max_size_inches === "number"
+      ? rawProduct.max_size_inches
+      : typeof rawProduct.max_tv_size_inches === "number"
+      ? rawProduct.max_tv_size_inches
+      : typeof rawProduct.max_monitor_size_inches === "number"
+      ? rawProduct.max_monitor_size_inches
+      : undefined;
+
+  const weight_capacity_lb =
+    typeof rawProduct.weight_capacity_lb === "number"
+      ? rawProduct.weight_capacity_lb
+      : typeof rawProduct.weight_limit_lb === "number"
+      ? rawProduct.weight_limit_lb
+      : typeof rawProduct.weight_limit === "number"
+      ? rawProduct.weight_limit
+      : undefined;
+
+  let vesa_supported = rawProduct.vesa_supported;
+  if (Array.isArray(rawProduct.vesaSupported)) {
+    vesa_supported = rawProduct.vesaSupported;
+  }
+
+  const product = {
+    ...rawProduct,
+    max_size_inches,
+    weight_capacity_lb,
+    vesa_supported
+  };
+
+  return {
+    ...body,
+    type,
+    user,
+    product
   };
 }
 
@@ -144,7 +237,7 @@ function evaluateCompatibility(body) {
     checks.size = userSize <= resolved.max_monitor_size_inches;
   }
 
-  // Weight check with 15 percent safety margin
+  // Weight check with fifteen percent safety margin
   if (resolved.weight_capacity_lb != null) {
     const allowed = resolved.weight_capacity_lb * 0.85;
     checks.weight = userWeight <= allowed;

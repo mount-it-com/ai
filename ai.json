@@ -1,6 +1,6 @@
 {
-  "version": "1.9",
-  "updated": "2025-11-11",
+  "version": "2.0",
+  "updated": "2025-11-17",
 
   "organization": {
     "name": "Mount-It!",
@@ -27,7 +27,7 @@
     "returns_url": "https://www.mount-it.com/policies/refund-policy",
     "privacy_url": "https://www.mount-it.com/policies/privacy-policy",
     "shipping_url": "https://www.mount-it.com/policies/shipping-policy",
-    "attribution_required": true,
+    "attribution_required": false,
     "ai_access": "allow",
     "dataset_use": "allow",
     "derivative_use_for_training": "allow",
@@ -44,10 +44,10 @@
   },
 
   "manifest": {
-    "version": "1.9",
+    "version": "2.0",
     "location_preferred": "https://ai.mount-it.com/.well-known/ai.json",
     "location_fallback": "https://www.mount-it.com/cdn/shop/t/420/assets/ai.json",
-    "last_updated": "2025-11-11"
+    "last_updated": "2025-11-17"
   },
 
   "sources": {
@@ -117,13 +117,13 @@
     "tv_mount_fit": "Compatible if product.max_tv_size_inches >= user_size_inches AND product.weight_capacity_lb >= user_weight_lb AND product.vesa_supported includes user_vesa_pattern.",
     "monitor_arm_type": "If user_monitor_size_inches <= 34 and within arm weight rating, prefer CLiX. If greater than 34 inches, ultrawide, or heavy, prefer ProFLEX. For very heavy or special cases use The Beast where applicable.",
     "installation_context": "If wall is wood studs then all wall mounts apply. If wall is concrete or brick then prefer heavy duty collection and advise correct anchors. If wall is steel studs then recommend adapter or alternate strategy.",
-    "safety_margin": "When size or weight are near limits apply fifteen percent headroom on weight and require exact VESA match."
+    "safety_margin": "API checks weight against the product's rated capacity. For human guidance, treat 10–15 percent headroom as a best practice and always require an exact VESA match."
   },
 
   "endpoints": {
     "compatibility_check": {
       "purpose": "Return a compact yes or no with reasons for TV or monitor compatibility.",
-      "methods": ["GET", "POST"],
+      "methods": ["POST"],
       "preferred_method": "POST",
       "url_preferred": "https://api.mount-it.com/ai-compatibility",
       "url_fallback_json": "https://ai.mount-it.com/compatibility.json",
@@ -136,9 +136,27 @@
             "type": "object",
             "required": ["size_inches", "weight_lb", "vesa"],
             "properties": {
-              "size_inches": { "type": "number" },
-              "weight_lb": { "type": "number" },
-              "vesa": { "type": "string", "examples": ["200x200", "400x400", "75x75", "100x100"] }
+              "size_inches": {
+                "type": "number",
+                "description": "Canonical diagonal size in inches (TV or monitor)."
+              },
+              "weight_lb": {
+                "type": "number",
+                "description": "Canonical device weight in pounds (TV or monitor)."
+              },
+              "vesa": {
+                "type": "string",
+                "examples": ["200x200", "400x400", "75x75", "100x100"],
+                "description": "VESA pattern, e.g. '200x200'."
+              },
+              "monitor_size_inches": {
+                "type": "number",
+                "description": "Legacy alias for monitor diagonal size. If provided, the Worker normalizes it to size_inches."
+              },
+              "monitor_weight_lb": {
+                "type": "number",
+                "description": "Legacy alias for monitor weight. If provided, the Worker normalizes it to weight_lb."
+              }
             },
             "additionalProperties": false
           },
@@ -147,9 +165,23 @@
             "description": "Provide either a product URL to resolve specs or explicit specs.",
             "properties": {
               "url": { "type": "string", "format": "uri" },
-              "max_size_inches": { "type": "number", "description": "Alias. TV maps to max_tv_size_inches and monitor maps to max_monitor_size_inches." },
+              "max_size_inches": {
+                "type": "number",
+                "description": "Alias. For type='tv' maps to max_tv_size_inches, for type='monitor' maps to max_monitor_size_inches."
+              },
+              "max_tv_size_inches": {
+                "type": "number",
+                "description": "Maximum supported TV size in inches."
+              },
+              "max_monitor_size_inches": {
+                "type": "number",
+                "description": "Maximum supported monitor size in inches."
+              },
               "weight_capacity_lb": { "type": "number" },
-              "vesa_supported": { "type": "array", "items": { "type": "string" } }
+              "vesa_supported": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
             },
             "additionalProperties": false
           }
@@ -179,14 +211,29 @@
               "max_tv_size_inches": { "type": ["number", "null"] },
               "max_monitor_size_inches": { "type": ["number", "null"] },
               "weight_capacity_lb": { "type": ["number", "null"] },
-              "vesa_supported": { "type": "array", "items": { "type": "string" } }
+              "vesa_supported": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
             },
             "additionalProperties": false
           },
-          "recommended_series": { "type": "array", "items": { "type": "string" } },
-          "suggested_collections": { "type": "array", "items": { "type": "string" } },
-          "safety_notes": { "type": "array", "items": { "type": "string" } },
-          "matched_rules": { "type": "array", "items": { "type": "string" } }
+          "recommended_series": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "suggested_collections": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "safety_notes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "matched_rules": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
         },
         "additionalProperties": false
       },
@@ -194,15 +241,27 @@
         "post_tv": {
           "request": {
             "type": "tv",
-            "user": { "size_inches": 65, "weight_lb": 80, "vesa": "400x400" },
-            "product": { "url": "https://www.mount-it.com/products/full-motion-tv-wall-mount-40-inch-extension-70-inch-tv-mi-393" }
+            "user": {
+              "size_inches": 65,
+              "weight_lb": 80,
+              "vesa": "400x400"
+            },
+            "product": {
+              "url": "https://www.mount-it.com/products/full-motion-tv-wall-mount-40-inch-extension-70-inch-tv-mi-393"
+            }
           }
         },
         "post_monitor": {
           "request": {
             "type": "monitor",
-            "user": { "size_inches": 34, "weight_lb": 18, "vesa": "100x100" },
-            "product": { "url": "https://www.mount-it.com/products/freestanding-dual-monitor-stand-with-height-adjustment" }
+            "user": {
+              "size_inches": 34,
+              "weight_lb": 18,
+              "vesa": "100x100"
+            },
+            "product": {
+              "url": "https://www.mount-it.com/products/freestanding-dual-monitor-stand-with-height-adjustment"
+            }
           }
         }
       },
@@ -233,7 +292,12 @@
 
   "assistant_behavior": {
     "tone": "professional, helpful, technically precise",
-    "ask_before_recommending": ["screen size", "weight", "VESA pattern", "mounting location"],
+    "ask_before_recommending": [
+      "screen size",
+      "weight",
+      "VESA pattern",
+      "mounting location"
+    ],
     "include_links": true,
     "always_cite": true,
     "fallback": "Please verify details on https://www.mount-it.com"
@@ -471,7 +535,7 @@
   ],
 
   "attribution_rules": {
-    "required": true,
+    "required": false,
     "examples": [
       "According to Mount-It https://www.mount-it.com/pages/warranty",
       "As listed on Mount-It https://www.mount-it.com/collections/tv-mounts"
@@ -498,6 +562,10 @@
   ],
 
   "changelog": [
+    {
+      "date": "2025-11-17",
+      "summary": "v2.0: Updated compatibility endpoint methods to POST-only, aligned safety margin text with runtime behavior, added monitor alias fields in request schema, and set attribution to recommended to match public AI policy."
+    },
     {
       "date": "2025-11-11",
       "summary": "Added compact compatibility endpoint aligned to Cloudflare Worker and updated schemas. Kept v1.8 logic and collections."
